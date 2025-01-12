@@ -3,6 +3,8 @@ import { TEvent } from "./event.interface";
 import AppError from "../../errors/AppError";
 import httpStatus from "http-status";
 import { User } from "../Auth/auth.model";
+import { io } from "../../../lib/socket";
+import { Notification } from "../Notification/notification.model";
 
 // Create a new event
 const createEvent = async (createdBy: string, payload: TEvent) => {
@@ -45,79 +47,6 @@ const createEvent = async (createdBy: string, payload: TEvent) => {
   return event;
 };
 
-// Register an attendee to an event
-const registerUserToEvent = async (userId: string, eventId: string) => {
-  // Check if user exists
-  const user = await User.findById(userId);
-  if (!user) {
-    throw new AppError(httpStatus.NOT_FOUND, "User not found");
-  }
-
-  // Todo make realtime using socket.io
-
-  // Find the event
-  const event = await Event.findById(eventId);
-  if (!event) {
-    throw new AppError(httpStatus.NOT_FOUND, "Event not found");
-  }
-
-  // Check if the user is already registered
-  if (event.attendees.includes(userId)) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "User is already registered for this event"
-    );
-  }
-
-  // Check if the event has remaining spots
-  if (event.maxAttendees <= 0) {
-    throw new AppError(httpStatus.BAD_REQUEST, "Event is fully booked");
-  }
-
-  // Register the user
-  event.attendees.push(userId);
-  event.maxAttendees -= 1;
-
-  // Save the updated event
-  await event.save();
-
-  return event;
-};
-
-// Withdraw an attendee from an event
-const withdrawUserFromEvent = async (userId: string, eventId: string) => {
-  // Check if user exists
-  const user = await User.findById(userId);
-  if (!user) {
-    throw new AppError(httpStatus.NOT_FOUND, "User not found");
-  }
-
-  // Todo make realtime using socket.io
-
-  // Find the event
-  const event = await Event.findById(eventId);
-  if (!event) {
-    throw new AppError(httpStatus.NOT_FOUND, "Event not found");
-  }
-
-  // Check if the user is not registered
-  if (!event.attendees.includes(userId)) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "User is not registered for this event"
-    );
-  }
-
-  // Withdraw the user
-  event.attendees = event.attendees.filter((id) => id !== userId);
-  event.maxAttendees += 1;
-
-  // Save the updated event
-  await event.save();
-
-  return event;
-};
-
 // Get all events
 const getAllMyEvents = async (userId: string) => {
   const isUserExists = await User.findById(userId);
@@ -151,19 +80,130 @@ const getEventById = async (userId: string, id: string) => {
   return event;
 };
 
+// Register an attendee to an event
+const registerUserToEvent = async (userId: string, eventId: string) => {
+  // Check if user exists
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  // Find the event
+  const event = await Event.findById(eventId);
+  if (!event) {
+    throw new AppError(httpStatus.NOT_FOUND, "Event not found");
+  }
+
+  // Check if the user is already registered
+  if (event.attendees.includes(userId)) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "User is already registered for this event"
+    );
+  }
+
+  // Check if the event has remaining spots
+  if (event.maxAttendees <= 0) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Event is fully booked");
+  }
+
+  // Register the user
+  event.attendees.push(userId);
+  event.maxAttendees -= 1;
+
+  // Save the updated event
+  await event.save();
+
+  // Create a notification for the event creator
+  const notification = await Notification.create({
+    userId: event.createdBy, // Notify the event creator
+    eventId: event._id,
+    message: `A new attendee (${user.name}) has registered for your event.`,
+    type: "new_attendee",
+    isRead: false,
+  });
+
+  // Broadcast real-time notification
+  io.emit("newNotification", {
+    userId: event.createdBy,
+    eventId: event._id,
+    message: notification.message,
+    type: notification.type,
+  });
+
+  return event;
+};
+
+// Withdraw an attendee from an event
+const withdrawUserFromEvent = async (userId: string, eventId: string) => {
+  // Check if user exists
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  // Find the event
+  const event = await Event.findById(eventId);
+  if (!event) {
+    throw new AppError(httpStatus.NOT_FOUND, "Event not found");
+  }
+
+  // Check if the user is not registered
+  if (!event.attendees.includes(userId)) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "User is not registered for this event"
+    );
+  }
+
+  // Withdraw the user
+  event.attendees = event.attendees.filter((id) => id !== userId);
+  event.maxAttendees += 1;
+
+  // Save the updated event
+  await event.save();
+
+  // Create a notification for the event creator
+  const notification = await Notification.create({
+    userId: event.createdBy, // Notify the event creator
+    eventId: event._id,
+    message: `An attendee (${user.name}) has withdrawn from your event.`,
+    type: "withdraw",
+    isRead: false,
+  });
+
+  // Broadcast real-time notification
+  io.emit("newNotification", {
+    userId: event.createdBy,
+    eventId: event._id,
+    message: notification.message,
+    type: notification.type,
+  });
+
+  return event;
+};
+
 // Update an event by ID
 const updateEvent = async (
   ownedBy: string,
   eventId: string,
   payload: Partial<TEvent>
 ) => {
-  const isUserExists = await User.findById(ownedBy);
+  const user = await User.findById(ownedBy);
 
-  if (!isUserExists) {
+  if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, "User not found");
   }
 
-  // Todo: Socket.io realtime update
+  const isEventExists = await Event.findById(eventId);
+
+  if (!isEventExists) {
+    throw new AppError(httpStatus.NOT_FOUND, "Event not found");
+  }
+
+  if (isEventExists.createdBy.toString() !== ownedBy) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized access");
+  }
 
   const event = await Event.findByIdAndUpdate(eventId, payload, {
     new: true,
@@ -173,6 +213,24 @@ const updateEvent = async (
   if (!event) {
     throw new AppError(httpStatus.NOT_FOUND, "Event not found");
   }
+
+  // Create a notification
+  const notification = await Notification.create({
+    userId: ownedBy,
+    eventId: event._id,
+    message: `The event '${event.name}' has been updated.`,
+    type: "event_update",
+    isRead: false,
+  });
+
+  // Broadcast real-time notification
+  io.emit("newNotification", {
+    userId: ownedBy,
+    eventId: event._id,
+    message: notification.message,
+    type: notification.type,
+  });
+
   return event;
 };
 
@@ -183,10 +241,15 @@ const deleteEvent = async (ownedBy: string, eventId: string) => {
   if (!isUserExists) {
     throw new AppError(httpStatus.NOT_FOUND, "User not found");
   }
+
   const event = await Event.findByIdAndDelete(eventId);
 
   if (!event) {
     throw new AppError(httpStatus.NOT_FOUND, "Event not found");
+  }
+
+  if (event?.createdBy.toString() !== ownedBy) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized access");
   }
 
   return event;

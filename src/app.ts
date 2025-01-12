@@ -11,23 +11,23 @@ import globalErrorHandler from "./app/middlewares/globalErrorhandler";
 
 const app: Application = express();
 
-//parsers
+// Middleware parsers
 app.use(express.json());
 app.use(cookieParser());
-
 app.use(cors({ origin: ["http://localhost:5173"], credentials: true }));
 
 // Application routes
 app.use("/api/v1", router);
 
+// Health check endpoint
 app.get("/", (req: Request, res: Response) => {
   res.send("Event Ease server is running");
 });
 
-// This is connected with the globalErrorhandler.ts file at the middleware folder.
+// Global error handler
 app.use(globalErrorHandler);
 
-// This is connected with the notFound.ts file at the middleware folder.
+// 404 middleware
 app.use(notFound);
 
 export default app;

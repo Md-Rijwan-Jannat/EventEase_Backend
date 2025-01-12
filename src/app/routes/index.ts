@@ -2,6 +2,7 @@ import { Router } from "express";
 import { AuthRoutes } from "../module/Auth/auth.routes";
 import { UserRoutes } from "../module/User/user.routes";
 import { EventRoutes } from "../module/Event/event.routes";
+import { NotificationRoutes } from "../module/Notification/notification.routes";
 
 const router = Router();
 
@@ -17,6 +18,10 @@ const moduleRoutes = [
   {
     path: "/events",
     route: EventRoutes,
+  },
+  {
+    path: "/notifications",
+    route: NotificationRoutes,
   },
 ];
 

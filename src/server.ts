@@ -1,35 +1,43 @@
-import { Server } from 'http';
-import mongoose from 'mongoose';
-import app from './app';
-import config from './config';
+import mongoose from "mongoose";
+import { socketServer } from "./lib/socket";
+import config from "./config";
 
-let server: Server;
+let server: any;
 
+// Main function to bootstrap the application
 async function main() {
   try {
+    // Connect to MongoDB
     await mongoose.connect(config.database_url as string);
+    console.log("✅ Connected to MongoDB");
 
-    server = app.listen(config.port, () => {
-      console.log(`app is listening on port ${config.port}`);
+    // Start server with Socket.IO integration
+    server = socketServer.listen(config.port, () => {
+      console.log(`🚀 Server is running on http://localhost:${config.port}`);
     });
   } catch (err) {
-    console.log(err);
+    console.error("❌ Database connection failed:", err);
   }
 }
 
+// Initialize application
 main();
 
-process.on('unhandledRejection', (err) => {
-  console.log(`😈 unhandledRejection is detected , shutting down ...`, err);
+// Handle unhandled promise rejections
+process.on("unhandledRejection", (err: Error) => {
+  console.error("❌ Unhandled Rejection detected:", err);
   if (server) {
     server.close(() => {
+      console.log("💀 Server is shutting down due to unhandled rejection");
       process.exit(1);
     });
+  } else {
+    process.exit(1);
   }
-  process.exit(1);
 });
 
-process.on('uncaughtException', () => {
-  console.log(`😈 uncaughtException is detected , shutting down ...`);
+// Handle uncaught exceptions
+process.on("uncaughtException", (err: Error) => {
+  console.error("❌ Uncaught Exception detected:", err);
   process.exit(1);
 });
