@@ -90,8 +90,18 @@ const logoutUserFromDB = async (token: string) => {
   }
 };
 
+// Check auth user
+const checkAuth = async (userId: string) => {
+  const user = await User.findById(userId).select("-password");
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+  return user;
+};
+
 export const UserServices = {
   registerUserIntoDB,
   loginUserFromDB,
   logoutUserFromDB,
+  checkAuth,
 };

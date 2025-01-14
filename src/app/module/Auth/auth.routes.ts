@@ -24,4 +24,7 @@ router.post(
 // Log out a user
 router.post("/logout", Auth(), AuthController.logoutUser);
 
+// Check auth user
+router.get("/check-auth", Auth(), AuthController.checkAuth);
+
 export const AuthRoutes = router;

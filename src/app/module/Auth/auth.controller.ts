@@ -56,10 +56,6 @@ const logoutUser = catchAsync(async (req: Request, res: Response) => {
   const token =
     req.cookies.accessToken || req.headers.authorization?.split(" ")[1];
 
-  if (!token) {
-    throw new AppError(httpStatus.UNAUTHORIZED, "No token provided");
-  }
-
   await UserServices.logoutUserFromDB(token);
 
   // Clear the access token cookie
@@ -76,8 +72,27 @@ const logoutUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const checkAuth = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserServices.checkAuth(req.user.id);
+
+  // Clear the access token cookie
+  res.clearCookie("accessToken", {
+    secure: config.NODE_ENV === "production",
+    httpOnly: true,
+    sameSite: "lax",
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User logged out successfully",
+    data: result,
+  });
+});
+
 export const AuthController = {
   registerUser,
   loginUser,
   logoutUser,
+  checkAuth,
 };

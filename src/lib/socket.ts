@@ -8,7 +8,7 @@ const server = http.createServer(app);
 // Configure Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173"], // Allowed origin
+    origin: ["http://localhost:3000"], // Allowed origin
     credentials: true, // Allow credentials
   },
 });
