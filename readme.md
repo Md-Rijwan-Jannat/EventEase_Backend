@@ -1,38 +1,88 @@
-## Express Backend Boilerplate
+# EventEase Backend
 
-- This repository serves as a boilerplate for developing a robust backend. You can speed up your backend development by using this repository.
+The backend for **EventEase** is built using Node.js, Express, and MongoDB to support event creation, attendee management, ticketing, and payment processing. It follows the modular pattern for scalable and maintainable code structure. The backend API provides endpoints to handle user authentication, event management, and payment integration.
 
-### Guidelines for use
+## Live URL
 
-- Visit [this link](https://github.com/enayetsyl/backend-boilerplate) to download the code. 
+You can access the live backend API [here](https://event-ease-backend-indol.vercel.app/api).
 
-- Alternatively, you can clone the project using the following command: 
+## Technology Stack
 
-```javascript
-git clone https://github.com/enayetsyl/backend-boilerplate.git
-```
+- **Backend**:
+  - Node.js
+  - Express
+  - Mongoose (MongoDB)
+  - TypeScript
+  - Modular Pattern
+- **API**:
+  - RESTful API design
+  - JWT Authentication
+- **Payment Integration**:
+  - Integration with AmarPay for payment processing
+- **Deployment**: Vercel
 
-- After downloading or cloning the project, open it in VS Code. Open the terminal and run the following command:
+## Installation Guidelines
 
-```javascript
-npm i
-```
+To run this project locally, follow these steps:
 
-- In the ".env" file, add your MongoDB URI in the `database_url`. 
+1. **Clone the Repository**:
 
-- Run following command in the terminal to start the project
+   ```bash
+   git https://github.com/Md-Rijwan-Jannat/EventEase_Backend
+   cd EventEase_Backend
+   Public
 
-```javascript
-npm run start:dev
-```
+   ```
 
-- Open your browser and navigate to localhost:5000 to check whether the app is working properly. 
+2. **Install Dependencies**:
 
-- Inside each file, there are comments for your guidance. Some comments explain the purpose of the code and provide supporting reading materials. 
+   ```bash
+   npm install
+   ```
 
-- In some files, comments with "TODO" indicate what you need to change if you want to use it for your project. Read them carefully. 
+3. **Set Up Environment Variables**:
+   Create a `.env` file in the root directory with the following content:
 
-- This boilerplate will save you from writing 730 lines of code, configuring three files, writing seven scripts in the `package.json` file, and installing 25 packages and dev dependencies.
+   ```env
+   PORT="5000"
+   NODE_ENV ="development"
+   DATABASE_URL="mongodb+srv://EventEase:EventEase@cluster0.jzg5j.mongodb.net/EventEase?retryWrites=true&w=majority&appName=Cluster0"
+   BCRYPT_SLAT_ROUNDS=12
+   JWT_ACCESS_SECRET="secret"
+   JWT_ACCESS_EXPIRES_IN="60d"
+   cloudinary_cloud_name= // todo put your cloudinary_cloud_name here.
+   cloudinary_api_key=// todo put your cloudinary_api_key here.
+   cloudinary_api_secret=// todo put your cloudinary_api_secret here.
+   ```
 
-- If you have any queries you can connect with me on [LinkedIn](https://www.linkedin.com/in/md-enayetur-rahman/)
-"# Backend-Boilarplate" 
+````
+
+4. **Run the Development Server**:
+
+```bash
+npm run dev
+````
+
+5. **Build the Project**:
+
+   ```bash
+   npm run build
+   ```
+
+6. **Run the Backend Server**:
+   ```bash
+   npm run dev
+   ```
+
+## Contact
+
+**Project Maintainer**: [Md Rijwan Jannat](rijwanjannat36@gmail.com)
+
+For more information, visit our backend gitHub [website](https://github.com/Md-Rijwan-Jannat/EventEase_Frontend).
+FrontEnd live link [website](https://enet-ease.vercel.app/).
+BackEnd live link [website](https://event-ease-backend-indol.vercel.app/)/api.
+
+## Acknowledgements
+
+- Special thanks to [Md Rijwan Jannat](https://github.com/Md-Rijwan-Jannat) for their contributions.
+- This project is powered by [React](https://reactjs.org), [Node.js](https://nodejs.org), and [AmarPay](https://amarpay.com).

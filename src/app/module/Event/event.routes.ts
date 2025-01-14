@@ -27,7 +27,7 @@ router.post(
 // Get all events
 router.get("/", Auth(), EventControllers.getAllMyEvents);
 // Get all events without my event
-router.get("/other", Auth(), EventControllers.getAllOtherEvents);
+router.get("/others", Auth(), EventControllers.getAllOtherEvents);
 
 // Get a single event by ID
 router.get("/:id", Auth(), EventControllers.getEventById);

@@ -3,7 +3,7 @@ import { TEvent } from "./event.interface";
 import AppError from "../../errors/AppError";
 import httpStatus from "http-status";
 import { User } from "../Auth/auth.model";
-import { io } from "../../../lib/socket";
+import { getReceiverSocketId, io } from "../../../lib/socket";
 import { Notification } from "../Notification/notification.model";
 
 // Create a new event
@@ -145,13 +145,16 @@ const registerUserToEvent = async (userId: string, eventId: string) => {
     isRead: false,
   });
 
-  // Broadcast real-time notification
-  io.emit("newNotification", {
-    userId: event.createdBy,
-    eventId: event._id,
-    message: notification.message,
-    type: notification.type,
-  });
+  // Broadcast real-time notification to the event creator
+  const receiverSocketId = getReceiverSocketId(event.createdBy);
+  if (receiverSocketId) {
+    io.to(receiverSocketId).emit("newNotification", {
+      userId: event.createdBy,
+      eventId: event._id,
+      message: notification.message,
+      type: notification.type,
+    });
+  }
 
   return event;
 };
@@ -194,13 +197,16 @@ const withdrawUserFromEvent = async (userId: string, eventId: string) => {
     isRead: false,
   });
 
-  // Broadcast real-time notification
-  io.emit("newNotification", {
-    userId: event.createdBy,
-    eventId: event._id,
-    message: notification.message,
-    type: notification.type,
-  });
+  // Broadcast real-time notification to the event creator
+  const receiverSocketId = getReceiverSocketId(event.createdBy);
+  if (receiverSocketId) {
+    io.to(receiverSocketId).emit("newNotification", {
+      userId: event.createdBy,
+      eventId: event._id,
+      message: notification.message,
+      type: notification.type,
+    });
+  }
 
   return event;
 };
@@ -211,22 +217,24 @@ const updateEvent = async (
   eventId: string,
   payload: Partial<TEvent>
 ) => {
+  // Check if the user exists
   const user = await User.findById(ownedBy);
-
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, "User not found");
   }
 
+  // Check if the event exists
   const isEventExists = await Event.findById(eventId);
-
   if (!isEventExists) {
     throw new AppError(httpStatus.NOT_FOUND, "Event not found");
   }
 
+  // Check if the user is the creator of the event
   if (isEventExists.createdBy.toString() !== ownedBy) {
     throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized access");
   }
 
+  // Update the event
   const event = await Event.findByIdAndUpdate(eventId, payload, {
     new: true,
     runValidators: true,
@@ -245,13 +253,29 @@ const updateEvent = async (
     isRead: false,
   });
 
-  // Broadcast real-time notification
-  io.emit("newNotification", {
-    userId: ownedBy,
-    eventId: event._id,
-    message: notification.message,
-    type: notification.type,
-  });
+  // Broadcast real-time notification to the event creator
+  const receiverSocketId = getReceiverSocketId(ownedBy);
+  if (receiverSocketId) {
+    io.to(receiverSocketId).emit("newNotification", {
+      userId: ownedBy,
+      eventId: event._id,
+      message: notification.message,
+      type: notification.type,
+    });
+  }
+
+  // Optionally, notify all attendees about the event update
+  for (const attendeeId of event.attendees) {
+    const attendeeSocketId = getReceiverSocketId(attendeeId);
+    if (attendeeSocketId) {
+      io.to(attendeeSocketId).emit("newNotification", {
+        userId: attendeeId,
+        eventId: event._id,
+        message: `The event '${event.name}' has been updated.`,
+        type: "event_update",
+      });
+    }
+  }
 
   return event;
 };
