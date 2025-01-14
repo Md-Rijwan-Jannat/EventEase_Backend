@@ -5,6 +5,7 @@ The backend for **EventEase** is built using Node.js, Express, and MongoDB to su
 ## Live URL
 
 You can access the live backend API [here](https://event-ease-backend-indol.vercel.app/api).
+Postman collection [here](https://bold-star-304677.postman.co/workspace/Next-Level-projects~82239778-a247-4cd4-8148-4b6f3913b541/collection/29971746-4851c1e5-c97c-4ed1-89be-80163bfdcf5a?action=share&creator=29971746)
 
 ## Technology Stack
 
