@@ -56,6 +56,17 @@ const getAllMyEvents = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// Get all events
+const getAllOtherEvents = catchAsync(async (req: Request, res: Response) => {
+  const events = await EventServices.getAllOtherEvents(req.user.id);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Other events retrieved successfully",
+    data: events,
+  });
+});
+
 // Get an event by ID
 const getEventById = catchAsync(async (req: Request, res: Response) => {
   const event = await EventServices.getEventById(req.user.id, req.params.id);
@@ -97,6 +108,7 @@ export const EventControllers = {
   registerUserToEvent,
   withdrawUserFromEvent,
   getAllMyEvents,
+  getAllOtherEvents,
   getEventById,
   updateEvent,
   deleteEvent,

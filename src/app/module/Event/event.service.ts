@@ -64,6 +64,28 @@ const getAllMyEvents = async (userId: string) => {
   return events;
 };
 
+// Get all event without my event
+// Get all events excluding user's own events
+const getAllOtherEvents = async (userId: string) => {
+  // Check if the user exists
+  const isUserExists = await User.findById(userId);
+
+  if (!isUserExists) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  // Find events excluding those created by the user
+  const events = await Event.find({ createdBy: { $ne: userId } }).populate(
+    "createdBy"
+  );
+
+  if (!events || events.length === 0) {
+    throw new AppError(httpStatus.NOT_FOUND, "No events found in database");
+  }
+
+  return events;
+};
+
 // Get a single event by ID
 const getEventById = async (userId: string, id: string) => {
   const isUserExists = await User.findById(userId);
@@ -260,6 +282,7 @@ export const EventServices = {
   registerUserToEvent,
   withdrawUserFromEvent,
   getAllMyEvents,
+  getAllOtherEvents,
   getEventById,
   updateEvent,
   deleteEvent,
